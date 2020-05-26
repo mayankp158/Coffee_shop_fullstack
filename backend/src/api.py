@@ -31,10 +31,10 @@ db_drop_and_create_all()
 
 def get_error_message(error, default_text):
     try:
-        # Return message contained in error, if possible
+
         return error['description']
     except TypeError:
-        # otherwise, return given default text
+
         return default_text
 
 
@@ -95,17 +95,18 @@ def drinks_detail(payload):
 @app.route('/drinks', methods=['POST'])
 @requires_auth('post:drinks')
 def create_drink(payload):
-    """Creates new drink and returns it to client"""
+    if request.data:
 
-    body = request.get_json()
-    new_drink = Drink(title=body['title'], recipe="""{}""".format(body['recipe']))
-
-    new_drink.insert()
-    new_drink.recipe = body['recipe']
-    return jsonify({
-        'success': True,
-        'drinks': Drink.long(new_drink)
-    })
+        body = request.get_json()
+        title = body.get('title', None)
+        recipe = body.get('recipe', None)
+        drink = Drink(title=title, recipe=json.dumps(recipe))
+        Drink.insert(drink)
+        new_drink = Drink.query.filter_by(id=drink.id).first()
+        return jsonify({
+            'success': True,
+            'drinks': [new_drink.long()]
+        })
 
 
 '''
